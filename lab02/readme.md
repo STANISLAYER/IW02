@@ -10,12 +10,9 @@
 В корне бандла есть `docker-compose.yaml` и `sample.env`.
 
 ```bash
-cd /mnt/data/appbundle/lab02prep
-# создадим .env с ключом (или скопируй sample.env)
+cd /mnt/data/appbundle/lab02prep 
 cp sample.env .env
-# при желании поменяй API_KEY в .env
 docker compose up -d
-# сервис будет доступен на http://localhost:8080
 ```
 
 Контракт API (согласно коду `app/index.php`):
@@ -33,7 +30,7 @@ curl "http://localhost:8080/?from=USD&to=EUR&date=2025-06-01" -X POST -d "key=EX
 
 ## 2) Установка зависимостей
 
-Требуется Python 3.9+ (рекомендую 3.10+).
+Требуется Python 3.9+.
 ```bash
 pip install -r requirements.txt
 # или
