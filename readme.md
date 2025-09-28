@@ -85,11 +85,3 @@ python lab02/currency_exchange_rate.py --from USD --to EUR --start-date 2025-01-
 ```bash
 python lab02/currency_exchange_rate.py --from US --to EUR --date 2025-06-01
 ```
-
-## 6) Что загрузить на GitHub
-
-- `lab02/currency_exchange_rate.py`
-- `lab02/readme.md`
-- `requirements.txt`
-- `.gitignore` (по желанию)
-- (опционально) содержимое `data/*.json` и `error.log` для демонстрации
