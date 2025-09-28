@@ -1,67 +1,95 @@
-# Support project for lab02
+# Lab 02 — Currency Exchange Rate CLI (for provided PHP service)
 
-It is a support project for `lab02` and represents a Currency Exchange Rate service. The default currency is `MDL` (Moldovan Leu) and the service provides exchange rates for `USD`, `EUR`, `RON`, `RUS` and `UAH`.
+Этот скрипт взаимодействует с приложением из бандла `lab02prep` (PHP + Apache в Docker) и:
+- запрашивает курс одной валюты к другой на указанную дату;
+- сохраняет ответ в `../data/` как JSON (`FROM_TO_YYYY-MM-DD.json`);
+- пишет ошибки в корневой `error.log` (одновременно выводит в консоль).
 
-Project contains the following files and directories:
+## 1) Запуск сервиса
 
-- `app/` - directory containing the main application code;
-  - `index.php` - main application file;
-- `data.json` - JSON file with sample exchange rates data;
-- `sample.env` - Environment variables file for the application;
-- `docker-compose.yml` - Docker Compose file for setting up the application and its dependencies.
-
-Project contains valid currency rates data from `2025-01-01` to `2025-09-15`.
-
-## How to run
-
-1. Make sure you have Docker and Docker Compose installed on your machine.
-2. Clone this repository to your local machine.
-3. Navigate to the project directory.
-4. Create a `.env` file by copying the `sample.env` file and set your desired API key.
-
-   ```bash
-   cp sample.env .env
-   ```
-
-5. Run the following command to build and start the application:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-6. The application will be accessible at `http://localhost:8080`.
-
-## How to use
-
-### List of currencies
-
-You can obtain the list of available currencies by sending a GET request to the `/?currencies` endpoint:
+В корне бандла есть `docker-compose.yaml` и `sample.env`.
 
 ```bash
-curl "http://localhost:8080/?currencies" -X POST -d "key=EXAMPLE_API_KEY"
+cd /mnt/data/appbundle/lab02prep 
+cp sample.env .env
+docker compose up -d
 ```
 
-#### Example response, list of currencies
-
-```json
-{"error":"","data":["MDL","USD","EUR","RON","RUS","UAH"]}
-```
-
-### Currency exchange rate
-
-You can access the currency exchange service by sending a GET request to the `/` endpoint with the following query parameters:
-
-- `from` (GET) - the currency you want to convert from (e.g., `USD`, `EUR`,);
-- `to` (GET) - the currency you want to convert to (e.g., `USD`, `EUR`);
-- `date` (GET) - (optional) the date for which you want the exchange rate in `YYYY-MM-DD` format. If not provided, the latest rates will be used;
-- `key` (POST) - API key for authentication.
-
+Контракт API (согласно коду `app/index.php`):
+- метод: **POST** (в теле передаём `key=<API_KEY>`);
+- query-параметры (GET): `from`, `to`, `date` (необязательный, формат YYYY-MM-DD; если пропущен — берутся последние доступные курсы);
+- пример запроса:
 ```bash
-curl "http://localhost:8080/?from=USD&to=EUR&date=2023-10-01" -X POST -d "key=EXAMPLE_API_KEY"
+curl "http://localhost:8080/?from=USD&to=EUR&date=2025-06-01" -X POST -d "key=EXAMPLE_API_KEY"
 ```
-
-#### Example response, currency exchange rate
-
+- ответ:
 ```json
-{"error":"","data":{"from":"USD","to":"EUR","rate":1.1753024588927439,"date":"2023-10-01"}}
+{"error":"","data":{"from":"USD","to":"EUR","rate":1.2345,"date":"2025-06-01"}}
 ```
+- валидный период данных: **2025-01-01 .. 2025-09-15**.
+
+## 2) Установка зависимостей
+
+Требуется Python 3.9+.
+```bash
+pip install -r requirements.txt
+# или
+pip install requests
+```
+
+## 3) Запуск скрипта
+
+Одиночный запрос:
+```bash
+python lab02/currency_exchange_rate.py --from USD --to EUR --date 2025-01-01
+```
+
+Пакетный режим (равные интервалы, ≥ 5 дат в диапазоне 2025-01-01..2025-09-15):
+```bash
+python lab02/currency_exchange_rate.py --from USD --to EUR --start-date 2025-01-01 --end-date 2025-09-15 --num-dates 5 --warn-outside-range
+```
+
+Полезные опции:
+- `--base-url` (по умолчанию `http://localhost:8080` или env `API_BASE_URL`)
+- `--api-key` (по умолчанию env `API_KEY` или `EXAMPLE_API_KEY` из .env)
+
+Примеры c переопределением:
+```bash
+python lab02/currency_exchange_rate.py --from RON --to USD --date 2025-03-01 --api-key EXAMPLE_API_KEY
+python lab02/currency_exchange_rate.py --from USD --to UAH --start-date 2025-01-01 --end-date 2025-09-15 --num-dates 7
+```
+
+Все успешные ответы сохраняются в `./data/` рядом с корнем бандла.
+Ошибки печатаются в консоль и пишутся в `./error.log` (в корне бандла).
+
+## 4) Структура и логика
+
+- **`parse_args`** — разбор аргументов (single/batch, `--base-url`, `--api-key`).
+- **`validate_currency`** — проверка 3-буквенного кода валюты.
+- **`parse_date`** — парсинг даты `YYYY-MM-DD`.
+- **`evenly_spaced_dates`** — равномерная выборка дат от `start` до `end`.
+- **`build_url`** — формирует URL вида `http://host:port/?from=...&to=...&date=...`.
+- **`call_service`** — POST c `key=<API_KEY>`, проверка статуса, JSON и поля `error`.
+- **`save_json`** — сохраняет JSON в `data/FROM_TO_YYYY-MM-DD.json`.
+- **`run_one`** — валидирует входные, вызывает сервис и сохраняет результат.
+- **`main`** — переключение между одиночным и пакетным режимом.
+
+## 5) Примеры для презентации
+
+Пять равных точек в диапазоне:
+```bash
+python lab02/currency_exchange_rate.py --from USD --to EUR --start-date 2025-01-01 --end-date 2025-09-15 --num-dates 5
+```
+
+Проверка обработки ошибок (неверная валюта):
+```bash
+python lab02/currency_exchange_rate.py --from US --to EUR --date 2025-06-01
+```
+
+## 6) Что загрузить на GitHub
+
+- `lab02/currency_exchange_rate.py`
+- `lab02/readme.md`
+- `requirements.txt`
+- `.gitignore` (по желанию)
+- (опционально) содержимое `data/*.json` и `error.log` для демонстрации
