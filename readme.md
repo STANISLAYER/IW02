@@ -1,13 +1,13 @@
 # Lab 02 — Currency Exchange Rate CLI (for provided PHP service)
 
-Этот скрипт взаимодействует с приложением из бандла `lab02prep` (PHP + Apache в Docker) и:
+Этот скрипт взаимодействует с приложением из архива `lab02prep` (PHP + Apache в Docker) и:
 - запрашивает курс одной валюты к другой на указанную дату;
 - сохраняет ответ в `../data/` как JSON (`FROM_TO_YYYY-MM-DD.json`);
 - пишет ошибки в корневой `error.log` (одновременно выводит в консоль).
 
 ## 1) Запуск сервиса
 
-В корне бандла есть `docker-compose.yaml` и `sample.env`.
+В корне архива есть `docker-compose.yaml` и `sample.env`.
 
 ```bash
 cd /mnt/data/appbundle/lab02prep 
@@ -59,8 +59,8 @@ python lab02/currency_exchange_rate.py --from RON --to USD --date 2025-03-01 --a
 python lab02/currency_exchange_rate.py --from USD --to UAH --start-date 2025-01-01 --end-date 2025-09-15 --num-dates 7
 ```
 
-Все успешные ответы сохраняются в `./data/` рядом с корнем бандла.
-Ошибки печатаются в консоль и пишутся в `./error.log` (в корне бандла).
+Все успешные ответы сохраняются в `./data/` рядом с корнем архива.
+Ошибки печатаются в консоль и пишутся в `./error.log` (в корне архива).
 
 ## 4) Структура и логика
 
